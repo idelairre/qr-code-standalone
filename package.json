@@ -12,7 +12,9 @@
         "predeploy": "npm run build && node scripts/copy-404.js",
         "deploy": "gh-pages -d dist",
         "setup-github-pages": "node scripts/setup-github-pages.js",
-        "deploy-full": "node scripts/deploy.js"
+        "deploy-full": "node scripts/deploy.js",
+        "run-all": "node scripts/run-all.js",
+        "runner": "node scripts/runner.js"
     },
     "keywords": [
         "qr-code",
