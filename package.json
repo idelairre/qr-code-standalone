@@ -4,7 +4,7 @@
     "type": "module",
     "description": "Standalone QR Code Generator with vCard support",
     "main": "dist/index.js",
-    "homepage": "https://legacyimmortal.github.io/qr-code-standalone",
+    "homepage": "https://idelairre.github.io/qr-code-standalone",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
