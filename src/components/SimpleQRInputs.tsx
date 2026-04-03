@@ -1,93 +1,110 @@
+import { Field, Input, SimpleGrid } from "@chakra-ui/react";
 import React from "react";
-import { Stack, Field, Input } from "@chakra-ui/react";
 
 interface SimpleQRInputsProps {
-    qrType: "vcard" | "text" | "url" | "email" | "sms";
-    simpleText: string;
-    setSimpleText: (value: string) => void;
-    simpleUrl: string;
-    setSimpleUrl: (value: string) => void;
-    simpleEmail: string;
-    setSimpleEmail: (value: string) => void;
-    simpleSms: string;
-    setSimpleSms: (value: string) => void;
+   qrType: "vcard" | "text" | "url" | "email" | "sms";
+   simpleText: string;
+   setSimpleText: (value: string) => void;
+   simpleUrl: string;
+   setSimpleUrl: (value: string) => void;
+   simpleEmail: string;
+   setSimpleEmail: (value: string) => void;
+   simpleSms: string;
+   setSimpleSms: (value: string) => void;
 }
 
 const SimpleQRInputs: React.FC<SimpleQRInputsProps> = ({
-    qrType,
-    simpleText,
-    setSimpleText,
-    simpleUrl,
-    setSimpleUrl,
-    simpleEmail,
-    setSimpleEmail,
-    simpleSms,
-    setSimpleSms,
+   qrType,
+   simpleText,
+   setSimpleText,
+   simpleUrl,
+   setSimpleUrl,
+   simpleEmail,
+   setSimpleEmail,
+   simpleSms,
+   setSimpleSms,
 }) => {
-    if (qrType === "text") {
-        return (
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Text Content</Field.Label>
-                    <Input
-                        value={simpleText}
-                        onChange={(e) => setSimpleText(e.target.value)}
-                        placeholder="Enter text to encode"
-                    />
-                </Field.Root>
-            </Stack>
-        );
-    }
+   if (qrType === "vcard") return null;
 
-    if (qrType === "url") {
-        return (
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Website URL</Field.Label>
-                    <Input
-                        value={simpleUrl}
-                        onChange={(e) => setSimpleUrl(e.target.value)}
-                        placeholder="https://example.com"
-                        type="url"
-                    />
-                </Field.Root>
-            </Stack>
-        );
-    }
+   const field = (label: string, node: React.ReactNode) => (
+      <Field.Root w="full" minW={0}>
+         <Field.Label textStyle="sm">{label}</Field.Label>
+         {node}
+      </Field.Root>
+   );
 
-    if (qrType === "email") {
-        return (
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Email Address</Field.Label>
-                    <Input
-                        value={simpleEmail}
-                        onChange={(e) => setSimpleEmail(e.target.value)}
-                        placeholder="user@example.com"
-                        type="email"
-                    />
-                </Field.Root>
-            </Stack>
-        );
-    }
+   if (qrType === "text") {
+      return (
+         <SimpleGrid w="full" columns={{ base: 1, md: 2 }} gap={3}>
+            {field(
+               "Text",
+               <Input
+                  w="full"
+                  size="sm"
+                  value={simpleText}
+                  onChange={(e) => setSimpleText(e.target.value)}
+                  placeholder="Text to encode"
+               />,
+            )}
+         </SimpleGrid>
+      );
+   }
 
-    if (qrType === "sms") {
-        return (
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Phone Number</Field.Label>
-                    <Input
-                        value={simpleSms}
-                        onChange={(e) => setSimpleSms(e.target.value)}
-                        placeholder="+1234567890"
-                        type="tel"
-                    />
-                </Field.Root>
-            </Stack>
-        );
-    }
+   if (qrType === "url") {
+      return (
+         <SimpleGrid w="full" columns={{ base: 1, md: 2 }} gap={3}>
+            {field(
+               "URL",
+               <Input
+                  w="full"
+                  size="sm"
+                  value={simpleUrl}
+                  onChange={(e) => setSimpleUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  type="url"
+               />,
+            )}
+         </SimpleGrid>
+      );
+   }
 
-    return null;
+   if (qrType === "email") {
+      return (
+         <SimpleGrid w="full" columns={{ base: 1, md: 2 }} gap={3}>
+            {field(
+               "Email",
+               <Input
+                  w="full"
+                  size="sm"
+                  value={simpleEmail}
+                  onChange={(e) => setSimpleEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  type="email"
+               />,
+            )}
+         </SimpleGrid>
+      );
+   }
+
+   if (qrType === "sms") {
+      return (
+         <SimpleGrid w="full" columns={{ base: 1, md: 2 }} gap={3}>
+            {field(
+               "Phone",
+               <Input
+                  w="full"
+                  size="sm"
+                  value={simpleSms}
+                  onChange={(e) => setSimpleSms(e.target.value)}
+                  placeholder="+1 555 0100"
+                  type="tel"
+               />,
+            )}
+         </SimpleGrid>
+      );
+   }
+
+   return null;
 };
 
 export default SimpleQRInputs;

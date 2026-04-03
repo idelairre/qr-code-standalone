@@ -1,562 +1,647 @@
-import React from "react";
 import {
-    Box,
-    Text,
-    VStack,
-    HStack,
-    Stack,
-    Field,
-    Input,
-    Select,
-    Portal,
-    Button,
+   Box,
+   Button,
+   createListCollection,
+   Field,
+   HStack,
+   Input,
+   Portal,
+   Select,
+   SimpleGrid,
+   Text,
+   VStack,
 } from "@chakra-ui/react";
-import { LuTriangle, LuInfo, LuX } from "react-icons/lu";
-import { useColorModeValue } from "./ui/color-mode";
-import { createListCollection } from "@chakra-ui/react";
+import React, { useId } from "react";
+import { LuInfo, LuTriangle, LuX } from "react-icons/lu";
 import { ContactInfo, validateVCardFields } from "../utils/vcardUtils";
+import { useColorModeValue } from "./ui/color-mode";
+import VCardDatePicker from "./VCardDatePicker";
 
 interface ContactFormProps {
-    contactInfo: ContactInfo;
-    onInputChange: (field: keyof ContactInfo, value: string) => void;
-    vcardVersion: "2.1" | "3.0" | "4.0" | "mecard";
-    onVcardVersionChange: (version: string) => void;
-    showV4Warning: boolean;
-    onCloseV4Warning: () => void;
-    mecardNickname: string;
-    setMecardNickname: (value: string) => void;
-    mecardBirthday: string;
-    setMecardBirthday: (value: string) => void;
+   contactInfo: ContactInfo;
+   onInputChange: (field: keyof ContactInfo, value: string) => void;
+   vcardVersion: "2.1" | "3.0" | "4.0" | "mecard";
+   onVcardVersionChange: (version: string) => void;
+   showV4Warning: boolean;
+   onCloseV4Warning: () => void;
+   mecardNickname: string;
+   setMecardNickname: (value: string) => void;
+   mecardBirthday: string;
+   setMecardBirthday: (value: string) => void;
+   /** Tighter grids and spacing for studio / dense layouts. */
+   density?: "default" | "compact";
+   /** Two-column grouping on wide screens so more fits above the fold. */
+   panelLayout?: "linear" | "bento";
+}
+
+function mecard8ToIso(s: string): string {
+   if (!/^\d{8}$/.test(s)) return "";
+   return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+}
+
+function isoToMecard8(iso: string): string {
+   return iso.replace(/-/g, "");
+}
+
+/** Soft panel: clear grouping without heavy chrome. */
+export function FormPanel({
+   title,
+   children,
+   compact,
+}: {
+   title: string;
+   children: React.ReactNode;
+   compact?: boolean;
+}) {
+   const titleId = useId();
+   const borderColor = useColorModeValue("blackAlpha.100", "whiteAlpha.100");
+   const bg = useColorModeValue("white", "gray.950");
+   const panelShadow = useColorModeValue("xs", "none");
+
+   return (
+      <Box
+         role="group"
+         aria-labelledby={titleId}
+         w="full"
+         borderRadius="lg"
+         borderWidth="1px"
+         borderColor={borderColor}
+         bg={bg}
+         px={3}
+         py={compact ? 2.5 : 3.5}
+         boxShadow={panelShadow}
+      >
+         <Text
+            as="h3"
+            id={titleId}
+            fontSize="xs"
+            fontWeight="semibold"
+            color="fg.muted"
+            textTransform="uppercase"
+            letterSpacing="0.07em"
+            mb={2.5}
+         >
+            {title}
+         </Text>
+         {children}
+      </Box>
+   );
 }
 
 const ContactForm: React.FC<ContactFormProps> = ({
-    contactInfo,
-    onInputChange,
-    vcardVersion,
-    onVcardVersionChange,
-    showV4Warning,
-    onCloseV4Warning,
-    mecardNickname,
-    setMecardNickname,
-    mecardBirthday,
-    setMecardBirthday,
+   contactInfo,
+   onInputChange,
+   vcardVersion,
+   onVcardVersionChange,
+   showV4Warning,
+   onCloseV4Warning,
+   mecardNickname,
+   setMecardNickname,
+   mecardBirthday,
+   setMecardBirthday,
+   density = "default",
+   panelLayout = "linear",
 }) => {
-    const textColor = useColorModeValue("gray.900", "gray.50");
+   const muted = useColorModeValue("gray.600", "gray.400");
+   const warnBg = useColorModeValue("orange.50", "orange.950");
+   const warnBorder = useColorModeValue("orange.200", "orange.800");
+   const infoBg = useColorModeValue("blue.50", "blue.950");
+   const infoBorder = useColorModeValue("blue.200", "blue.800");
+   const errBg = useColorModeValue("red.50", "red.950");
+   const errBorder = useColorModeValue("red.200", "red.800");
 
-    const phoneTypesCollection = createListCollection({
-        items: [
-            { label: "Mobile", value: "CELL" },
-            { label: "Work", value: "WORK" },
-            { label: "Home", value: "HOME" },
-            { label: "Fax", value: "FAX" },
-        ],
-    });
+   const phoneTypesCollection = createListCollection({
+      items: [
+         { label: "Mobile", value: "CELL" },
+         { label: "Work", value: "WORK" },
+         { label: "Home", value: "HOME" },
+         { label: "Fax", value: "FAX" },
+      ],
+   });
 
-    const emailTypesCollection = createListCollection({
-        items: [
-            { label: "Work", value: "WORK" },
-            { label: "Personal", value: "HOME" },
-        ],
-    });
+   const emailTypesCollection = createListCollection({
+      items: [
+         { label: "Work", value: "WORK" },
+         { label: "Personal", value: "HOME" },
+      ],
+   });
 
-    const genderTypesCollection = createListCollection({
-        items: [
-            { label: "Male", value: "M" },
-            { label: "Female", value: "F" },
-            { label: "Other", value: "O" },
-            { label: "Not specified", value: "N" },
-            { label: "Unknown", value: "U" },
-        ],
-    });
+   const genderTypesCollection = createListCollection({
+      items: [
+         { label: "Male", value: "M" },
+         { label: "Female", value: "F" },
+         { label: "Other", value: "O" },
+         { label: "Not specified", value: "N" },
+         { label: "Unknown", value: "U" },
+      ],
+   });
 
-    const vcardVersionsCollection = createListCollection({
-        items: [
-            { label: "vCard 2.1 (Maximum Compatibility)", value: "2.1" },
-            { label: "vCard 3.0 (Recommended)", value: "3.0" },
-            { label: "vCard 4.0 (Latest Standard)", value: "4.0" },
-            { label: "MECARD (Compact Format)", value: "mecard" },
-        ],
-    });
+   const vcardVersionsCollection = createListCollection({
+      items: [
+         { label: "vCard 2.1 (classic / widest support)", value: "2.1" },
+         { label: "vCard 3.0", value: "3.0" },
+         { label: "vCard 4.0", value: "4.0" },
+         { label: "MECARD (compact)", value: "mecard" },
+      ],
+   });
 
-    return (
-        <VStack gap={6} align="stretch">
-            {/* vCard Version Selection */}
-            <Box>
-                <Text mb={2} fontWeight="medium" color={textColor}>vCard Version</Text>
-                <Select.Root
-                    collection={vcardVersionsCollection}
-                    value={[vcardVersion]}
-                    onValueChange={(e) => onVcardVersionChange(e.value[0])}
-                >
-                    <Select.HiddenSelect />
-                    <Select.Control>
-                        <Select.Trigger>
-                            <Select.ValueText placeholder="Select vCard version" />
+   const validation = validateVCardFields(contactInfo, vcardVersion);
+
+   const compact = density === "compact";
+   const bento = panelLayout === "bento";
+   const sectionGap = compact ? 2.5 : 3.5;
+   const fieldGap = compact ? ({ base: 1, md: 1 } as const) : ({ base: 1, md: 2 } as const);
+   const cols2 = compact ? ({ base: 1, sm: 2, lg: 3, xl: 4 } as const) : ({ base: 1, md: 2 } as const);
+   const cols2max = compact ? ({ base: 1, sm: 2, lg: 4 } as const) : ({ base: 1, md: 2 } as const);
+
+   const statusStrip = (
+      <VStack gap={2} align="stretch">
+         {showV4Warning && (
+            <Box p={2.5} borderRadius="md" bg={warnBg} borderWidth="1px" borderColor={warnBorder}>
+               <HStack align="flex-start" gap={2}>
+                  <LuTriangle size={14} style={{ marginTop: 2, flexShrink: 0 }} />
+                  <VStack align="flex-start" gap={0} flex={1}>
+                     <Text fontSize="sm" fontWeight="medium">
+                        vCard 4.0 compatibility
+                     </Text>
+                     <Text fontSize="xs" color={muted}>
+                        Some older scanners only support 3.0 or 2.1.
+                     </Text>
+                  </VStack>
+                  <Button size="xs" variant="ghost" onClick={onCloseV4Warning} p={1} minW="auto">
+                     <LuX size={14} />
+                  </Button>
+               </HStack>
+            </Box>
+         )}
+
+         {vcardVersion === "mecard" && (
+            <Box p={2.5} borderRadius="md" bg={infoBg} borderWidth="1px" borderColor={infoBorder}>
+               <HStack align="flex-start" gap={2}>
+                  <LuInfo size={14} style={{ marginTop: 2, flexShrink: 0 }} />
+                  <Text fontSize="xs" color={muted}>
+                     MECARD is compact: no prefix/suffix, department, title, typed phone/email,
+                     gender, or anniversary.
+                  </Text>
+               </HStack>
+            </Box>
+         )}
+
+         {!validation.isValid && (
+            <Box p={2.5} borderRadius="md" bg={errBg} borderWidth="1px" borderColor={errBorder}>
+               <HStack align="flex-start" gap={2}>
+                  <LuTriangle size={14} style={{ marginTop: 2, flexShrink: 0 }} />
+                  <VStack align="flex-start" gap={0} flex={1}>
+                     <Text fontSize="sm" fontWeight="medium">
+                        Fix before sharing
+                     </Text>
+                     {validation.errors.map((error, index) => (
+                        <Text key={index} fontSize="xs">
+                           • {error}
+                        </Text>
+                     ))}
+                  </VStack>
+               </HStack>
+            </Box>
+         )}
+      </VStack>
+   );
+
+   const elFormat = (
+      <FormPanel title="vCard format" compact={compact}>
+         <Field.Root w="full">
+            <Field.Label textStyle="sm">Version</Field.Label>
+            <Select.Root w="full"
+               collection={vcardVersionsCollection}
+               value={[vcardVersion]}
+               size="sm"
+               onValueChange={(e) => onVcardVersionChange(e.value[0])}
+            >
+               <Select.HiddenSelect />
+               <Select.Control w="full">
+                  <Select.Trigger w="full">
+                     <Select.ValueText placeholder="Version" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                     <Select.Indicator />
+                  </Select.IndicatorGroup>
+               </Select.Control>
+               <Portal>
+                  <Select.Positioner>
+                     <Select.Content>
+                        {vcardVersionsCollection.items.map((version) => (
+                           <Select.Item key={version.value} item={version}>
+                              {version.label}
+                              <Select.ItemIndicator />
+                           </Select.Item>
+                        ))}
+                     </Select.Content>
+                  </Select.Positioner>
+               </Portal>
+            </Select.Root>
+         </Field.Root>
+      </FormPanel>
+   );
+
+   const elName = (
+      <FormPanel title="Name" compact={compact}>
+         <SimpleGrid w="full" columns={vcardVersion === "mecard" ? { base: 1, md: 2 } : cols2} gap={fieldGap}>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">First name</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.firstName}
+                  onChange={(e) => onInputChange("firstName", e.target.value)}
+                  placeholder="Jane"
+               />
+            </Field.Root>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">Last name</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.lastName}
+                  onChange={(e) => onInputChange("lastName", e.target.value)}
+                  placeholder="Doe"
+               />
+            </Field.Root>
+            {vcardVersion !== "mecard" && (
+               <>
+                  <Field.Root w="full">
+                     <Field.Label textStyle="sm">Prefix</Field.Label>
+                     <Input w="full"
+                        size="sm"
+                        value={contactInfo.prefix}
+                        onChange={(e) => onInputChange("prefix", e.target.value)}
+                        placeholder="Dr."
+                     />
+                  </Field.Root>
+                  <Field.Root w="full">
+                     <Field.Label textStyle="sm">Suffix</Field.Label>
+                     <Input w="full"
+                        size="sm"
+                        value={contactInfo.suffix}
+                        onChange={(e) => onInputChange("suffix", e.target.value)}
+                        placeholder="Jr."
+                     />
+                  </Field.Root>
+               </>
+            )}
+         </SimpleGrid>
+      </FormPanel>
+   );
+
+   const elWork = (
+      <FormPanel title="Work" compact={compact}>
+         <SimpleGrid w="full" columns={cols2} gap={fieldGap}>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">Organization</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.organization}
+                  onChange={(e) => onInputChange("organization", e.target.value)}
+                  placeholder="Acme Inc."
+               />
+            </Field.Root>
+            {vcardVersion !== "mecard" && (
+               <>
+                  <Field.Root w="full">
+                     <Field.Label textStyle="sm">Department</Field.Label>
+                     <Input w="full"
+                        size="sm"
+                        value={contactInfo.orgUnit}
+                        onChange={(e) => onInputChange("orgUnit", e.target.value)}
+                        placeholder="Engineering"
+                     />
+                  </Field.Root>
+                  <Box gridColumn="1 / -1" w="full" minW={0}>
+                     <Field.Root w="full">
+                        <Field.Label textStyle="sm">Title</Field.Label>
+                        <Input w="full"
+                           size="sm"
+                           value={contactInfo.title}
+                           onChange={(e) => onInputChange("title", e.target.value)}
+                           placeholder="Role / title"
+                        />
+                     </Field.Root>
+                  </Box>
+               </>
+            )}
+         </SimpleGrid>
+      </FormPanel>
+   );
+
+   const elContact = (
+      <FormPanel title="Contact" compact={compact}>
+         <SimpleGrid w="full" columns={cols2max} gap={fieldGap}>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">Phone</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.phone}
+                  onChange={(e) => onInputChange("phone", e.target.value)}
+                  placeholder="+1 555 0100"
+                  type="tel"
+               />
+            </Field.Root>
+            {vcardVersion !== "mecard" && (
+               <Field.Root w="full">
+                  <Field.Label textStyle="sm">Phone type</Field.Label>
+                  <Select.Root w="full"
+                     collection={phoneTypesCollection}
+                     value={[contactInfo.phoneType]}
+                     size="sm"
+                     onValueChange={(e) => onInputChange("phoneType", e.value[0])}
+                  >
+                     <Select.HiddenSelect />
+                     <Select.Control w="full">
+                        <Select.Trigger w="full">
+                           <Select.ValueText placeholder="Type" />
                         </Select.Trigger>
                         <Select.IndicatorGroup>
-                            <Select.Indicator />
+                           <Select.Indicator />
                         </Select.IndicatorGroup>
-                    </Select.Control>
-                    <Portal>
+                     </Select.Control>
+                     <Portal>
                         <Select.Positioner>
-                            <Select.Content>
-                                {vcardVersionsCollection.items.map((version) => (
-                                    <Select.Item key={version.value} item={version}>
-                                        {version.label}
-                                        <Select.ItemIndicator />
-                                    </Select.Item>
-                                ))}
-                            </Select.Content>
+                           <Select.Content>
+                              {phoneTypesCollection.items.map((type) => (
+                                 <Select.Item key={type.value} item={type}>
+                                    {type.label}
+                                    <Select.ItemIndicator />
+                                 </Select.Item>
+                              ))}
+                           </Select.Content>
                         </Select.Positioner>
-                    </Portal>
-                </Select.Root>
+                     </Portal>
+                  </Select.Root>
+               </Field.Root>
+            )}
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">Email</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.email}
+                  onChange={(e) => onInputChange("email", e.target.value)}
+                  placeholder="you@example.com"
+                  type="email"
+               />
+            </Field.Root>
+            {(vcardVersion === "2.1" || vcardVersion === "3.0") && (
+               <Field.Root w="full">
+                  <Field.Label textStyle="sm">Email type</Field.Label>
+                  <Select.Root w="full"
+                     collection={emailTypesCollection}
+                     value={[contactInfo.emailType]}
+                     size="sm"
+                     onValueChange={(e) => onInputChange("emailType", e.value[0])}
+                  >
+                     <Select.HiddenSelect />
+                     <Select.Control w="full">
+                        <Select.Trigger w="full">
+                           <Select.ValueText placeholder="Type" />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                           <Select.Indicator />
+                        </Select.IndicatorGroup>
+                     </Select.Control>
+                     <Portal>
+                        <Select.Positioner>
+                           <Select.Content>
+                              {emailTypesCollection.items.map((type) => (
+                                 <Select.Item key={type.value} item={type}>
+                                    {type.label}
+                                    <Select.ItemIndicator />
+                                 </Select.Item>
+                              ))}
+                           </Select.Content>
+                        </Select.Positioner>
+                     </Portal>
+                  </Select.Root>
+               </Field.Root>
+            )}
+         </SimpleGrid>
+      </FormPanel>
+   );
+
+   const elAddress = (
+      <FormPanel title="Address" compact={compact}>
+         <SimpleGrid w="full" columns={cols2} gap={fieldGap}>
+            <Box gridColumn="1 / -1" w="full" minW={0}>
+               <Field.Root w="full">
+                  <Field.Label textStyle="sm">Street</Field.Label>
+                  <Input w="full"
+                     size="sm"
+                     value={contactInfo.streetAddress || ""}
+                     onChange={(e) => onInputChange("streetAddress", e.target.value)}
+                     placeholder="123 Main St"
+                  />
+               </Field.Root>
             </Box>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">City</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.city || ""}
+                  onChange={(e) => onInputChange("city", e.target.value)}
+                  placeholder="City"
+               />
+            </Field.Root>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">State / region</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.state || ""}
+                  onChange={(e) => onInputChange("state", e.target.value)}
+                  placeholder="ST"
+               />
+            </Field.Root>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">Postal code</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.postalCode || ""}
+                  onChange={(e) => onInputChange("postalCode", e.target.value)}
+                  placeholder="12345"
+               />
+            </Field.Root>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">Country</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.country || ""}
+                  onChange={(e) => onInputChange("country", e.target.value)}
+                  placeholder="Country"
+               />
+            </Field.Root>
+         </SimpleGrid>
+      </FormPanel>
+   );
 
-            {/* vCard 4.0 Warning Alert */}
-            {showV4Warning && (
-                <Box
-                    p={3}
-                    bg="orange.50"
-                    border="1px solid"
-                    borderColor="orange.200"
-                    borderRadius="md"
-                    _dark={{
-                        bg: "orange.900",
-                        borderColor: "orange.700"
-                    }}
-                >
-                    <HStack align="flex-start" gap={2}>
-                        <LuTriangle
-                            color="orange.500"
-                            size={16}
-                            style={{ marginTop: "2px", flexShrink: 0 }}
+   const elPersonal =
+      vcardVersion !== "mecard" ? (
+         <FormPanel title="Personal" compact={compact}>
+            <VStack gap={compact ? 2 : 3} align="stretch">
+               <SimpleGrid w="full" columns={{ base: 1, md: 2, lg: compact ? 3 : 2 }} gap={fieldGap}>
+                  <VCardDatePicker
+                     label="Birthday"
+                     value={contactInfo.birthday || ""}
+                     onChange={(iso) => onInputChange("birthday", iso)}
+                  />
+                  {vcardVersion === "4.0" && (
+                     <Field.Root w="full">
+                        <Field.Label textStyle="sm">Birthday time</Field.Label>
+                        <Input w="full"
+                           size="sm"
+                           type="time"
+                           value={contactInfo.birthdayTime || ""}
+                           onChange={(e) => onInputChange("birthdayTime", e.target.value)}
                         />
-                        <VStack align="flex-start" gap={1} flex={1}>
-                            <Text fontWeight="medium" color="orange.800" _dark={{ color: "orange.200" }}>
-                                vCard 4.0 Compatibility Notice
-                            </Text>
-                            <Text fontSize="sm" color="orange.700" _dark={{ color: "orange.300" }}>
-                                vCard 4.0 is the latest standard but may not be supported by all older devices and QR code scanners.
-                                For maximum compatibility, consider using vCard 3.0 or 2.1 instead.
-                            </Text>
-                        </VStack>
-                        <Button
-                            size="xs"
-                            variant="ghost"
-                            color="orange.600"
-                            _dark={{ color: "orange.300" }}
-                            _hover={{
-                                bg: "orange.100",
-                                _dark: { bg: "orange.800" }
-                            }}
-                            onClick={onCloseV4Warning}
-                            p={1}
-                            minW="auto"
-                            h="auto"
-                        >
-                            <LuX size={14} />
-                        </Button>
-                    </HStack>
-                </Box>
-            )}
-
-            {/* MECARD Field Limitations Notice */}
-            {vcardVersion === "mecard" && (
-                <Box
-                    p={3}
-                    bg="blue.50"
-                    border="1px solid"
-                    borderColor="blue.200"
-                    _dark={{
-                        bg: "blue.900",
-                        borderColor: "blue.700"
-                    }}
-                >
-                    <HStack align="flex-start" gap={2}>
-                        <LuInfo
-                            color="blue.500"
-                            size={16}
-                            style={{ marginTop: "2px", flexShrink: 0 }}
-                        />
-                        <VStack align="flex-start" gap={1} flex={1}>
-                            <Text fontWeight="medium" color="blue.800" _dark={{ color: "blue.200" }}>
-                                MECARD Format Notice
-                            </Text>
-                            <Text fontSize="sm" color="blue.700" _dark={{ color: "blue.300" }}>
-                                MECARD supports: Name, Phone, Email, Organization, Website, Note, Address, Birthday, and Nickname.
-                                Prefix/Suffix, Department, Title, Phone/Email types, Gender, and Anniversary are not supported.
-                                This creates smaller QR codes with essential contact information only.
-                            </Text>
-                        </VStack>
-                    </HStack>
-                </Box>
-            )}
-
-            {/* Validation Errors */}
-            {(() => {
-                const validation = validateVCardFields(contactInfo, vcardVersion);
-                if (!validation.isValid) {
-                    return (
-                        <Box
-                            p={3}
-                            bg="red.50"
-                            border="1px solid"
-                            borderColor="red.200"
-                            borderRadius="md"
-                            _dark={{
-                                bg: "red.900",
-                                borderColor: "red.700"
-                            }}
-                        >
-                            <HStack align="flex-start" gap={2}>
-                                <LuTriangle
-                                    color="red.500"
-                                    size={16}
-                                    style={{ marginTop: "2px", flexShrink: 0 }}
-                                />
-                                <VStack align="flex-start" gap={1} flex={1}>
-                                    <Text fontWeight="medium" color="red.800" _dark={{ color: "red.200" }}>
-                                        Validation Errors
-                                    </Text>
-                                    {validation.errors.map((error, index) => (
-                                        <Text key={index} fontSize="sm" color="red.700" _dark={{ color: "red.300" }}>
-                                            • {error}
-                                        </Text>
-                                    ))}
-                                </VStack>
-                            </HStack>
-                        </Box>
-                    );
-                }
-                return null;
-            })()}
-
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>First Name</Field.Label>
-                    <Input
-                        value={contactInfo.firstName}
-                        onChange={(e) => onInputChange("firstName", e.target.value)}
-                        placeholder="John"
-                    />
-                </Field.Root>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Last Name</Field.Label>
-                    <Input
-                        value={contactInfo.lastName}
-                        onChange={(e) => onInputChange("lastName", e.target.value)}
-                        placeholder="Doe"
-                    />
-                </Field.Root>
-            </Stack>
-
-            {/* Prefix and Suffix - not supported in MECARD */}
-            {vcardVersion !== "mecard" && (
-                <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Prefix</Field.Label>
-                        <Input
-                            value={contactInfo.prefix}
-                            onChange={(e) => onInputChange("prefix", e.target.value)}
-                            placeholder="Dr."
-                        />
-                    </Field.Root>
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Suffix</Field.Label>
-                        <Input
-                            value={contactInfo.suffix}
-                            onChange={(e) => onInputChange("suffix", e.target.value)}
-                            placeholder="Jr."
-                        />
-                    </Field.Root>
-                </Stack>
-            )}
-
-            {/* Organization - supported in all vCard versions */}
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Organization</Field.Label>
-                    <Input
-                        value={contactInfo.organization}
-                        onChange={(e) => onInputChange("organization", e.target.value)}
-                        placeholder="Company Name"
-                    />
-                </Field.Root>
-                {/* Department/Org Unit - not supported in MECARD */}
-                {vcardVersion !== "mecard" && (
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Department</Field.Label>
-                        <Input
-                            value={contactInfo.orgUnit}
-                            onChange={(e) => onInputChange("orgUnit", e.target.value)}
-                            placeholder="Engineering"
-                        />
-                    </Field.Root>
-                )}
-            </Stack>
-
-            {/* Title - not supported in MECARD */}
-            {vcardVersion !== "mecard" && (
-                <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Title</Field.Label>
-                        <Input
-                            value={contactInfo.title}
-                            onChange={(e) => onInputChange("title", e.target.value)}
-                            placeholder="Software Engineer"
-                        />
-                    </Field.Root>
-                </Stack>
-            )}
-
-            {/* Phone - supported in all vCard versions */}
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Phone</Field.Label>
-                    <Input
-                        value={contactInfo.phone}
-                        onChange={(e) => onInputChange("phone", e.target.value)}
-                        placeholder="+1234567890"
-                    />
-                </Field.Root>
-                {/* Phone Type - not supported in MECARD */}
-                {vcardVersion !== "mecard" && (
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Phone Type</Field.Label>
-                        <Select.Root
-                            collection={phoneTypesCollection}
-                            value={[contactInfo.phoneType]}
-                            onValueChange={(e) => onInputChange("phoneType", e.value[0])}
-                        >
-                            <Select.HiddenSelect />
-                            <Select.Control>
-                                <Select.Trigger>
-                                    <Select.ValueText placeholder="Select phone type" />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
+                        <Field.HelperText fontSize="xs">Optional (vCard 4.0).</Field.HelperText>
+                     </Field.Root>
+                  )}
+               </SimpleGrid>
+               {vcardVersion === "4.0" && (
+                  <>
+                     <SimpleGrid w="full" columns={{ base: 1, md: 2, lg: compact ? 3 : 2 }} gap={fieldGap}>
+                        <Field.Root w="full">
+                           <Field.Label textStyle="sm">Gender</Field.Label>
+                           <Select.Root w="full"
+                              collection={genderTypesCollection}
+                              value={contactInfo.gender ? [contactInfo.gender] : []}
+                              size="sm"
+                              onValueChange={(e) => onInputChange("gender", e.value[0] ?? "")}
+                           >
+                              <Select.HiddenSelect />
+                              <Select.Control w="full">
+                                 <Select.Trigger w="full">
+                                    <Select.ValueText placeholder="Select" />
+                                 </Select.Trigger>
+                                 <Select.IndicatorGroup>
                                     <Select.Indicator />
-                                </Select.IndicatorGroup>
-                            </Select.Control>
-                            <Portal>
-                                <Select.Positioner>
+                                 </Select.IndicatorGroup>
+                              </Select.Control>
+                              <Portal>
+                                 <Select.Positioner>
                                     <Select.Content>
-                                        {phoneTypesCollection.items.map((type) => (
-                                            <Select.Item key={type.value} item={type}>
-                                                {type.label}
-                                                <Select.ItemIndicator />
-                                            </Select.Item>
-                                        ))}
+                                       {genderTypesCollection.items.map((gender) => (
+                                          <Select.Item key={gender.value} item={gender}>
+                                             {gender.label}
+                                             <Select.ItemIndicator />
+                                          </Select.Item>
+                                       ))}
                                     </Select.Content>
-                                </Select.Positioner>
-                            </Portal>
-                        </Select.Root>
-                    </Field.Root>
-                )}
-            </Stack>
-
-            {/* Email - supported in all vCard versions */}
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Email</Field.Label>
-                    <Input
-                        value={contactInfo.email}
-                        onChange={(e) => onInputChange("email", e.target.value)}
-                        placeholder="john@example.com"
-                        type="email"
-                    />
-                </Field.Root>
-                {/* Email Type - only show for vCard 2.1 and 3.0, not 4.0 or MECARD */}
-                {(vcardVersion === "2.1" || vcardVersion === "3.0") && (
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Email Type</Field.Label>
-                        <Select.Root
-                            collection={emailTypesCollection}
-                            value={[contactInfo.emailType]}
-                            onValueChange={(e) => onInputChange("emailType", e.value[0])}
-                        >
-                            <Select.HiddenSelect />
-                            <Select.Control>
-                                <Select.Trigger>
-                                    <Select.ValueText placeholder="Select email type" />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
-                                    <Select.Indicator />
-                                </Select.IndicatorGroup>
-                            </Select.Control>
-                            <Portal>
-                                <Select.Positioner>
-                                    <Select.Content>
-                                        {emailTypesCollection.items.map((type) => (
-                                            <Select.Item key={type.value} item={type}>
-                                                {type.label}
-                                                <Select.ItemIndicator />
-                                            </Select.Item>
-                                        ))}
-                                    </Select.Content>
-                                </Select.Positioner>
-                            </Portal>
-                        </Select.Root>
-                    </Field.Root>
-                )}
-            </Stack>
-
-            {/* Address - supported in all vCard versions */}
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Street Address</Field.Label>
-                    <Input
-                        value={contactInfo.streetAddress || ""}
-                        onChange={(e) => onInputChange("streetAddress", e.target.value)}
-                        placeholder="123 Main St."
-                    />
-                </Field.Root>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>City</Field.Label>
-                    <Input
-                        value={contactInfo.city || ""}
-                        onChange={(e) => onInputChange("city", e.target.value)}
-                        placeholder="Springfield"
-                    />
-                </Field.Root>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>State/Province</Field.Label>
-                    <Input
-                        value={contactInfo.state || ""}
-                        onChange={(e) => onInputChange("state", e.target.value)}
-                        placeholder="IL"
-                    />
-                </Field.Root>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Postal Code</Field.Label>
-                    <Input
-                        value={contactInfo.postalCode || ""}
-                        onChange={(e) => onInputChange("postalCode", e.target.value)}
-                        placeholder="12345"
-                    />
-                </Field.Root>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Country</Field.Label>
-                    <Input
-                        value={contactInfo.country || ""}
-                        onChange={(e) => onInputChange("country", e.target.value)}
-                        placeholder="USA"
-                    />
-                </Field.Root>
-            </Stack>
-
-            {/* Birthday - supported in vCard 2.1, 3.0, 4.0 and MECARD */}
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Birthday (YYYY-MM-DD)</Field.Label>
-                    <Input
-                        value={contactInfo.birthday || ""}
-                        onChange={(e) => onInputChange("birthday", e.target.value)}
-                        placeholder="1970-03-10"
-                        type="date"
-                    />
-                </Field.Root>
-            </Stack>
-
-            {/* Gender - only supported in vCard 4.0 */}
-            {vcardVersion === "4.0" && (
-                <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Gender</Field.Label>
-                        <Select.Root
-                            collection={genderTypesCollection}
-                            value={[contactInfo.gender || ""]}
-                            onValueChange={(e) => onInputChange("gender", e.value[0])}
-                        >
-                            <Select.HiddenSelect />
-                            <Select.Control>
-                                <Select.Trigger>
-                                    <Select.ValueText placeholder="Select gender" />
-                                </Select.Trigger>
-                                <Select.IndicatorGroup>
-                                    <Select.Indicator />
-                                </Select.IndicatorGroup>
-                            </Select.Control>
-                            <Portal>
-                                <Select.Positioner>
-                                    <Select.Content>
-                                        {genderTypesCollection.items.map((gender) => (
-                                            <Select.Item key={gender.value} item={gender}>
-                                                {gender.label}
-                                                <Select.ItemIndicator />
-                                            </Select.Item>
-                                        ))}
-                                    </Select.Content>
-                                </Select.Positioner>
-                            </Portal>
-                        </Select.Root>
-                    </Field.Root>
-                </Stack>
-            )}
-
-            {/* Anniversary - only supported in vCard 4.0 */}
-            {vcardVersion === "4.0" && (
-                <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Anniversary (YYYY-MM-DD)</Field.Label>
-                        <Input
-                            value={contactInfo.anniversary || ""}
-                            onChange={(e) => onInputChange("anniversary", e.target.value)}
-                            placeholder="1990-10-21"
-                            type="date"
+                                 </Select.Positioner>
+                              </Portal>
+                           </Select.Root>
+                        </Field.Root>
+                        <Box />
+                     </SimpleGrid>
+                     <SimpleGrid w="full" columns={{ base: 1, md: 2, lg: compact ? 3 : 2 }} gap={fieldGap}>
+                        <VCardDatePicker
+                           label="Anniversary"
+                           value={contactInfo.anniversary || ""}
+                           onChange={(iso) => onInputChange("anniversary", iso)}
                         />
-                    </Field.Root>
-                </Stack>
-            )}
+                        <Field.Root w="full">
+                           <Field.Label textStyle="sm">Anniversary time</Field.Label>
+                           <Input w="full"
+                              size="sm"
+                              type="time"
+                              value={contactInfo.anniversaryTime || ""}
+                              onChange={(e) => onInputChange("anniversaryTime", e.target.value)}
+                           />
+                        </Field.Root>
+                     </SimpleGrid>
+                  </>
+               )}
+            </VStack>
+         </FormPanel>
+      ) : null;
 
-            {/* Website URL - supported in all vCard versions */}
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Website</Field.Label>
-                    <Input
-                        value={contactInfo.url}
-                        onChange={(e) => onInputChange("url", e.target.value)}
-                        placeholder="https://example.com"
-                        type="url"
-                    />
-                </Field.Root>
-            </Stack>
+   const elMecard =
+      vcardVersion === "mecard" ? (
+         <FormPanel title="MECARD extras" compact={compact}>
+            <SimpleGrid w="full" columns={{ base: 1, md: 2 }} gap={fieldGap}>
+               <Field.Root w="full">
+                  <Field.Label textStyle="sm">Nickname</Field.Label>
+                  <Input w="full"
+                     size="sm"
+                     value={mecardNickname}
+                     onChange={(e) => setMecardNickname(e.target.value)}
+                     placeholder="Nickname"
+                  />
+               </Field.Root>
+               <VCardDatePicker
+                  label="Birthday"
+                  value={mecard8ToIso(mecardBirthday)}
+                  onChange={(iso) => setMecardBirthday(iso ? isoToMecard8(iso) : "")}
+               />
+            </SimpleGrid>
+         </FormPanel>
+      ) : null;
 
-            {/* Note - supported in all vCard versions */}
-            <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                <Field.Root orientation="horizontal">
-                    <Field.Label>Note</Field.Label>
-                    <Input
-                        value={contactInfo.note}
-                        onChange={(e) => onInputChange("note", e.target.value)}
-                        placeholder="Scan to connect!"
-                    />
-                </Field.Root>
-            </Stack>
+   const elWeb = (
+      <FormPanel title="Web & note" compact={compact}>
+         <SimpleGrid w="full" columns={{ base: 1, md: 2 }} gap={fieldGap}>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">Website</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.url}
+                  onChange={(e) => onInputChange("url", e.target.value)}
+                  placeholder="https://example.com"
+                  type="url"
+               />
+            </Field.Root>
+            <Field.Root w="full">
+               <Field.Label textStyle="sm">Note</Field.Label>
+               <Input w="full"
+                  size="sm"
+                  value={contactInfo.note}
+                  onChange={(e) => onInputChange("note", e.target.value)}
+                  placeholder="Short note for scanners"
+               />
+            </Field.Root>
+         </SimpleGrid>
+      </FormPanel>
+   );
 
-            {/* MECARD specific fields */}
-            {vcardVersion === "mecard" && (
-                <Stack gap="4" css={{ '--field-label-width': 'sizes.24' }}>
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Nickname</Field.Label>
-                        <Input
-                            value={mecardNickname}
-                            onChange={(e) => setMecardNickname(e.target.value)}
-                            placeholder="Johnny"
-                        />
-                    </Field.Root>
-                    <Field.Root orientation="horizontal">
-                        <Field.Label>Birthday (YYYYMMDD)</Field.Label>
-                        <Input
-                            value={mecardBirthday}
-                            onChange={(e) => setMecardBirthday(e.target.value)}
-                            placeholder="19700310"
-                            maxLength={8}
-                        />
-                    </Field.Root>
-                </Stack>
-            )}
-        </VStack>
-    );
+   const linearStack = (
+      <VStack gap={sectionGap} align="stretch" w="full">
+         {elFormat}
+         {elName}
+         {elWork}
+         {elContact}
+         {elAddress}
+         {elPersonal}
+         {elMecard}
+         {elWeb}
+      </VStack>
+   );
+
+   const bentoGrid = (
+      <SimpleGrid w="full" columns={{ base: 1, xl: 2 }} gap={4} alignItems="start">
+         <VStack gap={sectionGap} align="stretch" w="full" minW={0}>
+            {elFormat}
+            {elName}
+            {elWork}
+         </VStack>
+         <VStack gap={sectionGap} align="stretch" w="full" minW={0}>
+            {elContact}
+            {elAddress}
+            {elPersonal}
+            {elMecard}
+            {elWeb}
+         </VStack>
+      </SimpleGrid>
+   );
+
+   return (
+      <VStack gap={compact ? 3 : 4} align="stretch" w="full">
+         {statusStrip}
+         {bento ? bentoGrid : linearStack}
+      </VStack>
+   );
 };
 
 export default ContactForm;

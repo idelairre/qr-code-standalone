@@ -2,18 +2,20 @@
 
 A standalone React application for generating QR codes with vCard support, built with Vite, React, and Chakra UI v3.
 
+This repo uses [Bun](https://bun.sh) as the package manager and script runner (`packageManager` is pinned in `package.json`).
+
 ### Installation
 
-1. Install dependencies:
+1. Install [Bun](https://bun.sh/docs/installation), then install dependencies:
 
 ```bash
-npm install
+bun install
 ```
 
 2. Start the development server:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 3. Open your browser and navigate to `http://localhost:5173`
@@ -21,7 +23,7 @@ npm run dev
 ### Building for Production
 
 ```bash
-npm run build
+bun run build
 ```
 
 The built files will be in the `dist` directory.
@@ -35,7 +37,7 @@ This project includes automated scripts for deploying to GitHub Pages. The deplo
 1. **Initial Setup** (run once):
 
    ```bash
-   npm run setup-github-pages
+   bun run setup-github-pages
    ```
 
    This script will automatically configure your `package.json` and `vite.config.js` based on your GitHub repository.
@@ -43,7 +45,7 @@ This project includes automated scripts for deploying to GitHub Pages. The deplo
 2. **Deploy to GitHub Pages**:
 
    ```bash
-   npm run deploy-full
+   bun run deploy-full
    ```
 
    This will build your app and deploy it to the `gh-pages` branch.
@@ -59,7 +61,7 @@ This project includes automated scripts for deploying to GitHub Pages. The deplo
 If you prefer to deploy manually:
 
 ```bash
-npm run deploy
+bun run deploy
 ```
 
 ### What the Scripts Do

@@ -1,298 +1,370 @@
 export interface ContactInfo {
-    firstName: string;
-    lastName: string;
-    middleName: string;
-    prefix: string;
-    suffix: string;
-    organization: string;
-    orgUnit: string;
-    title: string;
-    phone: string;
-    phoneType: string;
-    email: string;
-    emailType: string;
-    url: string;
-    note: string;
-    // Address fields
-    streetAddress?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-    // Additional vCard 4.0 fields
-    birthday?: string;
-    gender?: string;
-    anniversary?: string;
+   firstName: string;
+   lastName: string;
+   middleName: string;
+   prefix: string;
+   suffix: string;
+   organization: string;
+   orgUnit: string;
+   title: string;
+   phone: string;
+   phoneType: string;
+   email: string;
+   emailType: string;
+   url: string;
+   note: string;
+   // Address fields
+   streetAddress?: string;
+   city?: string;
+   state?: string;
+   postalCode?: string;
+   country?: string;
+   // Additional vCard 4.0 fields
+   birthday?: string;
+   /** HH:mm (local), only used with birthday in vCard 4.0 */
+   birthdayTime?: string;
+   gender?: string;
+   anniversary?: string;
+   /** HH:mm (local), only used with anniversary in vCard 4.0 */
+   anniversaryTime?: string;
 }
 
+/** Empty contact for a clean form (no sample data). */
+export const createEmptyContactInfo = (): ContactInfo => ({
+   firstName: "",
+   lastName: "",
+   middleName: "",
+   prefix: "",
+   suffix: "",
+   organization: "",
+   orgUnit: "",
+   title: "",
+   phone: "",
+   phoneType: "CELL",
+   email: "",
+   emailType: "WORK",
+   url: "",
+   note: "",
+   streetAddress: "",
+   city: "",
+   state: "",
+   postalCode: "",
+   country: "",
+   birthday: "",
+   birthdayTime: "",
+   gender: "",
+   anniversary: "",
+   anniversaryTime: "",
+});
+
 export interface MecardInfo extends ContactInfo {
-    nickname: string;
-    birthday: string;
+   nickname: string;
+   birthday: string;
 }
 
 // Generate vCard string from contact info based on version
 export const generateVCard = (info: ContactInfo, version: string): string => {
-    if (version === "mecard") {
-        return generateMECARD(info as MecardInfo);
-    }
+   if (version === "mecard") {
+      return generateMECARD(info as MecardInfo);
+   }
 
-    const lines = [
-        "BEGIN:VCARD",
-        `VERSION:${version}`,
-    ];
+   const lines = ["BEGIN:VCARD", `VERSION:${version}`];
 
-    // Add name - different formats for different versions
-    if (info.firstName || info.lastName || info.middleName || info.prefix || info.suffix) {
-        const nameParts = [
-            info.lastName || "",
-            info.firstName || "",
-            info.middleName || "",
-            info.prefix || "",
-            info.suffix || "",
-        ];
+   // Add name - different formats for different versions
+   if (info.firstName || info.lastName || info.middleName || info.prefix || info.suffix) {
+      const nameParts = [
+         info.lastName || "",
+         info.firstName || "",
+         info.middleName || "",
+         info.prefix || "",
+         info.suffix || "",
+      ];
 
-        // vCard 4.0 uses comma separation, others use semicolon
-        const separator = version === "4.0" ? "," : ";";
-        lines.push(`N:${nameParts.join(separator)}`);
+      // vCard 4.0 uses comma separation, others use semicolon
+      const separator = version === "4.0" ? "," : ";";
+      lines.push(`N:${nameParts.join(separator)}`);
 
-        const fullName = [info.prefix, info.firstName, info.middleName, info.lastName, info.suffix]
-            .filter(Boolean)
-            .join(" ");
-        if (fullName) {
-            lines.push(`FN:${fullName}`);
-        }
-    }
+      const fullName = [info.prefix, info.firstName, info.middleName, info.lastName, info.suffix]
+         .filter(Boolean)
+         .join(" ");
+      if (fullName) {
+         lines.push(`FN:${fullName}`);
+      }
+   }
 
-    // Add organization
-    if (info.organization) {
-        if (info.orgUnit) {
-            lines.push(`ORG:${info.organization};${info.orgUnit}`);
-        } else {
-            lines.push(`ORG:${info.organization}`);
-        }
-    }
+   // Add organization
+   if (info.organization) {
+      if (info.orgUnit) {
+         lines.push(`ORG:${info.organization};${info.orgUnit}`);
+      } else {
+         lines.push(`ORG:${info.organization}`);
+      }
+   }
 
-    // Add title
-    if (info.title) {
-        lines.push(`TITLE:${info.title}`);
-    }
+   // Add title
+   if (info.title) {
+      lines.push(`TITLE:${info.title}`);
+   }
 
-    // Add phone - different parameter formats
-    if (info.phone) {
-        if (version === "2.1") {
-            lines.push(`TEL;${info.phoneType}:${info.phone}`);
-        } else if (version === "3.0") {
-            lines.push(`TEL;TYPE=${info.phoneType}:${info.phone}`);
-        } else if (version === "4.0") {
-            lines.push(`TEL;TYPE=${info.phoneType.toLowerCase()}:${info.phone}`);
-        }
-    }
+   // Add phone - different parameter formats
+   if (info.phone) {
+      if (version === "2.1") {
+         lines.push(`TEL;${info.phoneType}:${info.phone}`);
+      } else if (version === "3.0") {
+         lines.push(`TEL;TYPE=${info.phoneType}:${info.phone}`);
+      } else if (version === "4.0") {
+         lines.push(`TEL;TYPE=${info.phoneType.toLowerCase()}:${info.phone}`);
+      }
+   }
 
-    // Add email - different parameter formats
-    if (info.email) {
-        if (version === "2.1") {
-            lines.push(`EMAIL;${info.emailType}:${info.email}`);
-        } else if (version === "3.0") {
-            lines.push(`EMAIL;TYPE=${info.emailType}:${info.email}`);
-        } else if (version === "4.0") {
-            // vCard 4.0 doesn't use email type parameters
-            lines.push(`EMAIL:${info.email}`);
-        }
-    }
+   // Add email - different parameter formats
+   if (info.email) {
+      if (version === "2.1") {
+         lines.push(`EMAIL;${info.emailType}:${info.email}`);
+      } else if (version === "3.0") {
+         lines.push(`EMAIL;TYPE=${info.emailType}:${info.email}`);
+      } else if (version === "4.0") {
+         // vCard 4.0 doesn't use email type parameters
+         lines.push(`EMAIL:${info.email}`);
+      }
+   }
 
-    // Add URL
-    if (info.url) {
-        if (version === "4.0") {
-            lines.push(`URL:${info.url}`);
-        } else {
-            lines.push(`URL:${info.url}`);
-        }
-    }
+   // Add URL
+   if (info.url) {
+      if (version === "4.0") {
+         lines.push(`URL:${info.url}`);
+      } else {
+         lines.push(`URL:${info.url}`);
+      }
+   }
 
-    // Add address (ADR property) - supported in all versions
-    if (info.streetAddress || info.city || info.state || info.postalCode || info.country) {
-        const addressParts = [
-            "", // PO Box
-            "", // Extended address
-            info.streetAddress || "", // Street address
-            info.city || "", // Locality
-            info.state || "", // Region
-            info.postalCode || "", // Postal code
-            info.country || "", // Country
-        ];
+   // Add address (ADR property) - supported in all versions
+   if (info.streetAddress || info.city || info.state || info.postalCode || info.country) {
+      const addressParts = [
+         "", // PO Box
+         "", // Extended address
+         info.streetAddress || "", // Street address
+         info.city || "", // Locality
+         info.state || "", // Region
+         info.postalCode || "", // Postal code
+         info.country || "", // Country
+      ];
 
-        if (version === "4.0") {
-            lines.push(`ADR:${addressParts.join(",")}`);
-        } else {
-            lines.push(`ADR:${addressParts.join(";")}`);
-        }
-    }
+      if (version === "4.0") {
+         lines.push(`ADR:${addressParts.join(",")}`);
+      } else {
+         lines.push(`ADR:${addressParts.join(";")}`);
+      }
+   }
 
-    // Add birthday (BDAY property) - supported in vCard 2.1, 3.0, 4.0
-    if (info.birthday) {
-        // Convert YYYY-MM-DD to YYYYMMDD format for vCard
-        const bdayFormatted = info.birthday.replace(/-/g, "");
-        lines.push(`BDAY:${bdayFormatted}`);
-    }
+   // Add birthday (BDAY property) - supported in vCard 2.1, 3.0, 4.0
+   if (info.birthday) {
+      const bdayFormatted = info.birthday.replace(/-/g, "");
+      if (version === "4.0" && info.birthdayTime && /^\d{2}:\d{2}$/.test(info.birthdayTime)) {
+         const [hh, mm] = info.birthdayTime.split(":");
+         lines.push(`BDAY:${bdayFormatted}T${hh.padStart(2, "0")}${mm.padStart(2, "0")}00`);
+      } else {
+         lines.push(`BDAY:${bdayFormatted}`);
+      }
+   }
 
-    // Add gender (GENDER property) - only supported in vCard 4.0
-    if (version === "4.0" && info.gender) {
-        lines.push(`GENDER:${info.gender}`);
-    }
+   // Add gender (GENDER property) - only supported in vCard 4.0
+   if (version === "4.0" && info.gender) {
+      lines.push(`GENDER:${info.gender}`);
+   }
 
-    // Add anniversary (ANNIVERSARY property) - only supported in vCard 4.0
-    if (version === "4.0" && info.anniversary) {
-        // Convert YYYY-MM-DD to YYYYMMDD format for vCard
-        const anniversaryFormatted = info.anniversary.replace(/-/g, "");
-        lines.push(`ANNIVERSARY:${anniversaryFormatted}`);
-    }
+   // Add anniversary (ANNIVERSARY property) - only supported in vCard 4.0
+   if (version === "4.0" && info.anniversary) {
+      const anniversaryFormatted = info.anniversary.replace(/-/g, "");
+      if (info.anniversaryTime && /^\d{2}:\d{2}$/.test(info.anniversaryTime)) {
+         const [hh, mm] = info.anniversaryTime.split(":");
+         lines.push(
+            `ANNIVERSARY:${anniversaryFormatted}T${hh.padStart(2, "0")}${mm.padStart(2, "0")}00`,
+         );
+      } else {
+         lines.push(`ANNIVERSARY:${anniversaryFormatted}`);
+      }
+   }
 
-    // Add note
-    if (info.note) {
-        lines.push(`NOTE:${info.note}`);
-    }
+   // Add note
+   if (info.note) {
+      lines.push(`NOTE:${info.note}`);
+   }
 
-    // Add revision date (not in vCard 2.1)
-    if (version !== "2.1") {
-        const now = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-        lines.push(`REV:${now}`);
-    }
+   // Add revision date (not in vCard 2.1)
+   if (version !== "2.1") {
+      const now = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+      lines.push(`REV:${now}`);
+   }
 
-    lines.push("END:VCARD");
-    return lines.join("\n");
+   lines.push("END:VCARD");
+   return lines.join("\n");
 };
 
 // Generate MECARD format (simpler, more compact)
 // MECARD only supports: N, TEL, EMAIL, ORG, URL, NOTE, ADR, BDAY, NICKNAME
 export const generateMECARD = (info: MecardInfo): string => {
-    const parts = [];
+   const parts = [];
 
-    // Name (required) - MECARD uses comma separation (last,first)
-    const nameParts = [info.lastName, info.firstName].filter(Boolean);
-    if (nameParts.length > 0) {
-        parts.push(`N:${nameParts.join(",")}`);
-    }
+   // Name (required) - MECARD uses comma separation (last,first)
+   const nameParts = [info.lastName, info.firstName].filter(Boolean);
+   if (nameParts.length > 0) {
+      parts.push(`N:${nameParts.join(",")}`);
+   }
 
-    // Phone - MECARD doesn't support phone types
-    if (info.phone) {
-        parts.push(`TEL:${info.phone}`);
-    }
+   // Phone - MECARD doesn't support phone types
+   if (info.phone) {
+      parts.push(`TEL:${info.phone}`);
+   }
 
-    // Email - MECARD doesn't support email types
-    if (info.email) {
-        parts.push(`EMAIL:${info.email}`);
-    }
+   // Email - MECARD doesn't support email types
+   if (info.email) {
+      parts.push(`EMAIL:${info.email}`);
+   }
 
-    // Organization - MECARD doesn't support department/org unit
-    if (info.organization) {
-        parts.push(`ORG:${info.organization}`);
-    }
+   // Organization - MECARD doesn't support department/org unit
+   if (info.organization) {
+      parts.push(`ORG:${info.organization}`);
+   }
 
-    // URL
-    if (info.url) {
-        parts.push(`URL:${info.url}`);
-    }
+   // URL
+   if (info.url) {
+      parts.push(`URL:${info.url}`);
+   }
 
-    // Note
-    if (info.note) {
-        parts.push(`NOTE:${info.note}`);
-    }
+   // Note
+   if (info.note) {
+      parts.push(`NOTE:${info.note}`);
+   }
 
-    // Nickname (MECARD specific)
-    if (info.nickname) {
-        parts.push(`NICKNAME:${info.nickname}`);
-    }
+   // Nickname (MECARD specific)
+   if (info.nickname) {
+      parts.push(`NICKNAME:${info.nickname}`);
+   }
 
-    // Birthday (MECARD specific) - format: YYYYMMDD
-    if (info.birthday) {
-        // Convert YYYY-MM-DD to YYYYMMDD format for MECARD
-        const bdayFormatted = info.birthday.replace(/-/g, "");
-        parts.push(`BDAY:${bdayFormatted}`);
-    }
+   // Birthday (MECARD specific) - format: YYYYMMDD
+   if (info.birthday) {
+      // Convert YYYY-MM-DD to YYYYMMDD format for MECARD
+      const bdayFormatted = info.birthday.replace(/-/g, "");
+      parts.push(`BDAY:${bdayFormatted}`);
+   }
 
-    // Address (MECARD supports ADR) - simplified format
-    if (info.streetAddress || info.city || info.state || info.postalCode || info.country) {
-        const addressParts = [
-            info.streetAddress || "",
-            info.city || "",
-            info.state || "",
-            info.postalCode || "",
-            info.country || "",
-        ].filter(Boolean);
+   // Address (MECARD supports ADR) - simplified format
+   if (info.streetAddress || info.city || info.state || info.postalCode || info.country) {
+      const addressParts = [
+         info.streetAddress || "",
+         info.city || "",
+         info.state || "",
+         info.postalCode || "",
+         info.country || "",
+      ].filter(Boolean);
 
-        if (addressParts.length > 0) {
-            parts.push(`ADR:${addressParts.join(",")}`);
-        }
-    }
+      if (addressParts.length > 0) {
+         parts.push(`ADR:${addressParts.join(",")}`);
+      }
+   }
 
-    return `MECARD:${parts.join(";")};;`;
+   return `MECARD:${parts.join(";")};;`;
 };
 
 // Validation function for vCard fields based on version
-export const validateVCardFields = (info: ContactInfo, version: string): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
+export const validateVCardFields = (
+   info: ContactInfo,
+   version: string,
+): { isValid: boolean; errors: string[] } => {
+   const errors: string[] = [];
 
-    // Basic required fields for all vCard versions
-    if (!info.firstName && !info.lastName) {
-        errors.push("At least First Name or Last Name is required");
-    }
+   // Basic required fields for all vCard versions
+   if (!info.firstName && !info.lastName) {
+      errors.push("At least First Name or Last Name is required");
+   }
 
-    // vCard 4.0 specific validations
-    if (version === "4.0") {
-        // Birthday format validation (YYYY-MM-DD)
-        if (info.birthday && !/^\d{4}-\d{2}-\d{2}$/.test(info.birthday)) {
-            errors.push("Birthday must be in YYYY-MM-DD format");
-        }
+   // vCard 4.0 specific validations
+   if (version === "4.0") {
+      // Birthday format validation (YYYY-MM-DD)
+      if (info.birthday && !/^\d{4}-\d{2}-\d{2}$/.test(info.birthday)) {
+         errors.push("Birthday must be in YYYY-MM-DD format");
+      }
 
-        // Anniversary format validation (YYYY-MM-DD)
-        if (info.anniversary && !/^\d{4}-\d{2}-\d{2}$/.test(info.anniversary)) {
-            errors.push("Anniversary must be in YYYY-MM-DD format");
-        }
+      // Anniversary format validation (YYYY-MM-DD)
+      if (info.anniversary && !/^\d{4}-\d{2}-\d{2}$/.test(info.anniversary)) {
+         errors.push("Anniversary must be in YYYY-MM-DD format");
+      }
 
-        // Gender validation
-        if (info.gender && !["M", "F", "O", "N", "U"].includes(info.gender)) {
-            errors.push("Gender must be one of: M, F, O, N, U");
-        }
-    }
+      // Gender validation
+      if (info.gender && !["M", "F", "O", "N", "U"].includes(info.gender)) {
+         errors.push("Gender must be one of: M, F, O, N, U");
+      }
 
-    // Email format validation
-    if (info.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email)) {
-        errors.push("Email must be in valid format");
-    }
+      const timeRe = /^\d{2}:\d{2}$/;
+      if (info.birthdayTime && !timeRe.test(info.birthdayTime)) {
+         errors.push("Birthday time must be HH:mm");
+      }
+      if (info.anniversaryTime && !timeRe.test(info.anniversaryTime)) {
+         errors.push("Anniversary time must be HH:mm");
+      }
+   }
 
-    // URL format validation
-    if (info.url && !/^https?:\/\/.+/.test(info.url)) {
-        errors.push("URL must start with http:// or https://");
-    }
+   // Email format validation
+   if (info.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email)) {
+      errors.push("Email must be in valid format");
+   }
 
-    return {
-        isValid: errors.length === 0,
-        errors
-    };
+   // URL format validation
+   if (info.url && !/^https?:\/\/.+/.test(info.url)) {
+      errors.push("URL must start with http:// or https://");
+   }
+
+   return {
+      isValid: errors.length === 0,
+      errors,
+   };
 };
 
 // Generate QR code data based on type
 export const generateQRData = (
-    qrType: "vcard" | "text" | "url" | "email" | "sms",
-    contactInfo: ContactInfo,
-    vcardVersion: string,
-    simpleText: string,
-    simpleUrl: string,
-    simpleEmail: string,
-    simpleSms: string
+   qrType: "vcard" | "text" | "url" | "email" | "sms",
+   contactInfo: ContactInfo,
+   vcardVersion: string,
+   simpleText: string,
+   simpleUrl: string,
+   simpleEmail: string,
+   simpleSms: string,
+   mecardNickname = "",
+   mecardBirthday = "",
 ): string => {
-    switch (qrType) {
-        case "vcard":
-            return generateVCard(contactInfo, vcardVersion);
-        case "text":
-            return simpleText;
-        case "url":
-            return simpleUrl.startsWith("http") ? simpleUrl : `https://${simpleUrl}`;
-        case "email":
-            return `mailto:${simpleEmail}`;
-        case "sms":
-            return `sms:${simpleSms}`;
-        default:
-            return generateVCard(contactInfo, vcardVersion);
-    }
+   switch (qrType) {
+      case "vcard": {
+         if (vcardVersion === "mecard") {
+            const bdayIso =
+               mecardBirthday.length === 8
+                  ? `${mecardBirthday.slice(0, 4)}-${mecardBirthday.slice(4, 6)}-${mecardBirthday.slice(6, 8)}`
+                  : contactInfo.birthday || "";
+            const mePayload: MecardInfo = {
+               ...contactInfo,
+               birthday: bdayIso,
+               nickname: mecardNickname,
+            };
+            return generateMECARD(mePayload);
+         }
+         return generateVCard(contactInfo, vcardVersion);
+      }
+      case "text":
+         return simpleText.trim() || " ";
+      case "url": {
+         const u = simpleUrl.trim();
+         if (!u) return "";
+         return u.startsWith("http") ? u : `https://${u}`;
+      }
+      case "email": {
+         const e = simpleEmail.trim();
+         return e ? `mailto:${e}` : "";
+      }
+      case "sms": {
+         const s = simpleSms.trim();
+         return s ? `sms:${s}` : "";
+      }
+      default:
+         return generateVCard(contactInfo, vcardVersion);
+   }
 };

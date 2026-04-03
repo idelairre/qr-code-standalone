@@ -1,81 +1,74 @@
-import React from "react";
-import { Button, VStack, Text, Badge, Flex, Card } from "@chakra-ui/react";
-import { QrCode } from "@chakra-ui/react";
+import { Badge, Button, Card, Flex, Text, VStack } from "@chakra-ui/react";
+import React, { useRef } from "react";
 import { LuDownload } from "react-icons/lu";
+import StyledQRCode, { type StyledQRCodeHandle } from "./StyledQRCode";
 
 interface QRCodeGeneratorProps {
-    value: string;
-    size?: "sm" | "md" | "lg" | "xl" | "2xl";
-    color?: string;
-    errorLevel?: "L" | "M" | "Q" | "H";
-    fileName?: string;
-    showDownload?: boolean;
-    showInfo?: boolean;
-    className?: string;
+   value: string;
+   size?: "sm" | "md" | "lg" | "xl" | "2xl";
+   color?: string;
+   errorLevel?: "L" | "M" | "Q" | "H";
+   fileName?: string;
+   showDownload?: boolean;
+   showInfo?: boolean;
+   className?: string;
 }
 
 const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
-    value,
-    size = "md",
-    color = "#000000",
-    errorLevel = "H",
-    fileName = "qr-code.png",
-    showDownload = true,
-    showInfo = false,
-    className,
+   value,
+   size = "md",
+   color = "#000000",
+   errorLevel = "H",
+   fileName = "qr-code.png",
+   showDownload = true,
+   showInfo = false,
+   className,
 }) => {
-    // Color mode values
-    const subtextColor = "gray.400";
-    return (
-        <VStack gap={4} className={className}>
-            <Card.Root>
-                <Card.Body gap={4}>
-                    <QrCode.Root
-                        value={value}
-                        size={size}
-                        encoding={{ ecc: errorLevel }}
-                    >
-                        <QrCode.Frame style={{ fill: color }}>
-                            <QrCode.Pattern />
-                        </QrCode.Frame>
+   const subtextColor = "gray.400";
+   const qrRef = useRef<StyledQRCodeHandle>(null);
 
-                        {showDownload && (
-                            <QrCode.DownloadTrigger
-                                asChild
-                                fileName={fileName}
-                                mimeType="image/png"
-                            >
-                                <Button
-                                    colorScheme="blue"
-                                    size="sm"
-                                    mt={3}
-                                >
-                                    <LuDownload style={{ marginRight: "8px" }} />
-                                    Download
-                                </Button>
-                            </QrCode.DownloadTrigger>
-                        )}
-                    </QrCode.Root>
-                </Card.Body>
-            </Card.Root>
+   return (
+      <VStack gap={4} className={className}>
+         <Card.Root>
+            <Card.Body gap={4}>
+               <StyledQRCode
+                  ref={qrRef}
+                  value={value}
+                  size={size}
+                  color={color}
+                  backgroundColor="#ffffff"
+                  errorLevel={errorLevel}
+               />
 
-            {showInfo && (
-                <VStack gap={2} align="stretch" w="full">
-                    <Flex justify="space-between" align="center">
-                        <Badge colorScheme="blue">
-                            {value.length} characters
-                        </Badge>
-                        <Badge colorScheme="green">
-                            Error Correction: {errorLevel}
-                        </Badge>
-                    </Flex>
-                    <Text fontSize="xs" color={subtextColor} textAlign="center">
-                        Scan with any QR code reader
-                    </Text>
-                </VStack>
-            )}
-        </VStack>
-    );
+               {showDownload && (
+                  <Button
+                     colorScheme="blue"
+                     size="sm"
+                     mt={3}
+                     onClick={() => {
+                        void qrRef.current?.download(fileName, "png");
+                     }}
+                  >
+                     <LuDownload style={{ marginRight: "8px" }} />
+                     Download
+                  </Button>
+               )}
+            </Card.Body>
+         </Card.Root>
+
+         {showInfo && (
+            <VStack gap={2} align="stretch" w="full">
+               <Flex justify="space-between" align="center">
+                  <Badge colorScheme="blue">{value.length} characters</Badge>
+                  <Badge colorScheme="green">Error Correction: {errorLevel}</Badge>
+               </Flex>
+               <Text fontSize="xs" color={subtextColor} textAlign="center">
+                  Scan with any QR code reader
+               </Text>
+            </VStack>
+         )}
+      </VStack>
+   );
 };
 
 export default QRCodeGenerator;
