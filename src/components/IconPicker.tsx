@@ -312,7 +312,11 @@ const IconPicker: React.FC<IconPickerProps> = ({ isOpen, onClose, onSelectIcon, 
    }, [isOpen, filteredIcons]);
 
    return (
-      <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()}>
+      <Dialog.Root
+         open={isOpen}
+         lazyMount
+         onOpenChange={(e) => !e.open && onClose()}
+      >
          <Portal>
             <Dialog.Backdrop />
             <Dialog.Positioner>

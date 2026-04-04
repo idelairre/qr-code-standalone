@@ -12,7 +12,8 @@ import {
 } from "@chakra-ui/react";
 import React, { useRef } from "react";
 import { LuDownload } from "react-icons/lu";
-import type { DotType } from "../utils/qrStyling";
+import type { DotType, QrPreviewLayout } from "../utils/qrStyling";
+import { getQrPreviewRenderSizePx } from "../utils/qrStyling";
 import StyledQRCode, { type StyledQRCodeHandle } from "./StyledQRCode";
 import { useColorModeValue } from "./ui/color-mode";
 
@@ -28,7 +29,8 @@ interface QRCodePreviewProps {
    qrType: "vcard" | "text" | "url" | "email" | "sms";
    vcardVersion: "2.1" | "3.0" | "4.0" | "mecard";
    /** default: large; compact: mobile; wrapped: dense sidebar; studio: sticky rail + minimal chrome */
-   layout?: "default" | "compact" | "wrapped" | "studio";
+   layout?: QrPreviewLayout;
+   logoImageMargin: number;
 }
 
 const QRCodePreview: React.FC<QRCodePreviewProps> = ({
@@ -43,6 +45,7 @@ const QRCodePreview: React.FC<QRCodePreviewProps> = ({
    qrType,
    vcardVersion,
    layout = "default",
+   logoImageMargin,
 }) => {
    const textColor = useColorModeValue("gray.900", "gray.50");
    const previewBg = useColorModeValue("gray.25", "gray.800");
@@ -63,14 +66,7 @@ const QRCodePreview: React.FC<QRCodePreviewProps> = ({
    const studio = layout === "studio";
    const tight = compact || wrapped || studio;
    const qrValue = qrData.trim() ? qrData : " ";
-   const previewSizeMap = studio
-      ? { sm: 168, md: 208, lg: 248, xl: 288, "2xl": 328 }
-      : wrapped
-        ? { sm: 160, md: 200, lg: 240, xl: 280, "2xl": 320 }
-        : compact
-          ? { sm: 140, md: 180, lg: 220, xl: 260, "2xl": 300 }
-          : { sm: 260, md: 320, lg: 380, xl: 440, "2xl": 500 };
-   const previewSizePx = previewSizeMap[qrSize];
+   const previewSizePx = getQrPreviewRenderSizePx(qrSize, layout);
 
    return (
       <Card.Root
@@ -112,6 +108,7 @@ const QRCodePreview: React.FC<QRCodePreviewProps> = ({
                      showLogo={showLogo}
                      logoSvgContent={logoSvgContent}
                      selectedIconComponent={selectedIconComponent}
+                     logoImageMargin={logoImageMargin}
                      responsive
                   />
 

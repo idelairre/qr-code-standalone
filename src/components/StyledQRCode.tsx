@@ -27,6 +27,8 @@ export type StyledQRCodeProps = {
    className?: string;
    /** When true, inner SVG scales down with container width (preview). */
    responsive?: boolean;
+   /** Inset around the logo inside the cleared center (SVG px). */
+   logoImageMargin?: number;
 };
 
 const StyledQRCode = forwardRef<StyledQRCodeHandle, StyledQRCodeProps>(
@@ -44,6 +46,7 @@ const StyledQRCode = forwardRef<StyledQRCodeHandle, StyledQRCodeProps>(
          selectedIconComponent = null,
          className,
          responsive = false,
+         logoImageMargin,
       },
       ref,
    ) => {
@@ -75,6 +78,7 @@ const StyledQRCode = forwardRef<StyledQRCodeHandle, StyledQRCodeProps>(
                errorLevel,
                dotsType,
                image,
+               logoImageMargin,
             });
             const qr = new QRCodeStyling(options);
             qr.append(el);
@@ -96,6 +100,7 @@ const StyledQRCode = forwardRef<StyledQRCodeHandle, StyledQRCodeProps>(
          showLogo,
          logoSvgContent,
          selectedIconComponent,
+         logoImageMargin,
       ]);
 
       useImperativeHandle(

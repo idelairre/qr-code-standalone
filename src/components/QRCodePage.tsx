@@ -13,8 +13,13 @@ import {
    VStack,
 } from "@chakra-ui/react";
 import potrace from "potrace";
-import React, { useState } from "react";
-import type { DotType } from "../utils/qrStyling";
+import React, { useEffect, useMemo, useState } from "react";
+import type { DotType, QrPreviewLayout } from "../utils/qrStyling";
+import {
+   DEFAULT_LOGO_IMAGE_MARGIN,
+   getQrPreviewRenderSizePx,
+   maxLogoImageMarginForCanvas,
+} from "../utils/qrStyling";
 import { ContactInfo, createEmptyContactInfo, generateQRData } from "../utils/vcardUtils";
 import ContactForm, { FormPanel } from "./ContactForm";
 import QRCodePreview from "./QRCodePreview";
@@ -25,7 +30,7 @@ import { useColorModeValue } from "./ui/color-mode";
 const QRCodePage: React.FC = () => {
    const [contactInfo, setContactInfo] = useState<ContactInfo>(createEmptyContactInfo);
 
-   const [qrType, setQrType] = useState<"vcard" | "text" | "url" | "email" | "sms">("vcard");
+   const [qrType, setQrType] = useState<"vcard" | "text" | "url" | "email" | "sms">("url");
    const [vcardVersion, setVcardVersion] = useState<"2.1" | "3.0" | "4.0" | "mecard">("2.1");
    const [showV4Warning, setShowV4Warning] = useState(false);
    const [v4WarningDismissed, setV4WarningDismissed] = useState(false);
@@ -36,6 +41,7 @@ const QRCodePage: React.FC = () => {
    const [showLogo, setShowLogo] = useState(false);
    const [logoFile, setLogoFile] = useState<File | null>(null);
    const [logoSvgContent, setLogoSvgContent] = useState<string>("");
+   const [logoImageMargin, setLogoImageMargin] = useState(DEFAULT_LOGO_IMAGE_MARGIN);
 
    const [isConverting, setIsConverting] = useState(false);
    const [conversionProgress, setConversionProgress] = useState(0);
@@ -47,6 +53,8 @@ const QRCodePage: React.FC = () => {
 
    const [mecardNickname, setMecardNickname] = useState("");
    const [mecardBirthday, setMecardBirthday] = useState("");
+   /** Remount vCard form on reset so progressive-disclosure state clears. */
+   const [contactFormMountKey, setContactFormMountKey] = useState(0);
 
    const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
    const [selectedIconName, setSelectedIconName] = useState<string>("");
@@ -61,17 +69,26 @@ const QRCodePage: React.FC = () => {
    const toolbarBorder = useColorModeValue("blackAlpha.80", "whiteAlpha.80");
 
    const studioLayout = useBreakpointValue({ base: false, lg: true }) ?? false;
-   const qrPreviewLayout = useBreakpointValue<"studio" | "default" | "compact">({
+   const qrPreviewLayout = (useBreakpointValue<QrPreviewLayout>({
       base: "compact",
       md: "default",
       lg: "studio",
-   }) ?? "compact";
+   }) ?? "compact") as QrPreviewLayout;
+
+   const logoImageMarginSliderMax = useMemo(() => {
+      const previewPx = getQrPreviewRenderSizePx(qrSize, qrPreviewLayout);
+      return Math.min(32, maxLogoImageMarginForCanvas(previewPx));
+   }, [qrSize, qrPreviewLayout]);
+
+   useEffect(() => {
+      setLogoImageMargin((m) => Math.min(m, logoImageMarginSliderMax));
+   }, [logoImageMarginSliderMax]);
 
    const qrTypesCollection = createListCollection({
       items: [
+         { label: "URL", value: "url" },
          { label: "vCard (contact)", value: "vcard" },
          { label: "Plain text", value: "text" },
-         { label: "URL", value: "url" },
          { label: "Email", value: "email" },
          { label: "SMS", value: "sms" },
       ],
@@ -110,7 +127,7 @@ const QRCodePage: React.FC = () => {
 
    const handleReset = () => {
       setContactInfo(createEmptyContactInfo());
-      setQrType("vcard");
+      setQrType("url");
       setVcardVersion("2.1");
       setShowV4Warning(false);
       setV4WarningDismissed(false);
@@ -118,12 +135,14 @@ const QRCodePage: React.FC = () => {
       setQrColor("#000000");
       setDotsType("square");
       setErrorLevel("H");
+      setLogoImageMargin(DEFAULT_LOGO_IMAGE_MARGIN);
       setSimpleText("");
       setSimpleUrl("");
       setSimpleEmail("");
       setSimpleSms("");
       setMecardNickname("");
       setMecardBirthday("");
+      setContactFormMountKey((k) => k + 1);
       setSelectedIconName("");
       setSelectedIconComponent(null);
       removeLogo();
@@ -239,6 +258,7 @@ const QRCodePage: React.FC = () => {
       selectedIconComponent,
       qrType,
       vcardVersion,
+      logoImageMargin,
    } as const;
 
    const formBody = (
@@ -325,6 +345,7 @@ const QRCodePage: React.FC = () => {
 
          {qrType === "vcard" && (
             <ContactForm
+               key={contactFormMountKey}
                contactInfo={contactInfo}
                onInputChange={handleInputChange}
                vcardVersion={vcardVersion}
@@ -365,6 +386,9 @@ const QRCodePage: React.FC = () => {
             onCopyQRData={copyQRData}
             qrType={qrType}
             vcardVersion={vcardVersion}
+            logoImageMargin={logoImageMargin}
+            setLogoImageMargin={setLogoImageMargin}
+            logoImageMarginSliderMax={logoImageMarginSliderMax}
             compact={studioLayout}
             studio={studioLayout}
          />

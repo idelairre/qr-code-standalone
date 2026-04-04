@@ -11,7 +11,7 @@ import {
    Text,
    VStack,
 } from "@chakra-ui/react";
-import React, { useId } from "react";
+import React, { useEffect, useId, useState } from "react";
 import { LuInfo, LuTriangle, LuX } from "react-icons/lu";
 import { ContactInfo, validateVCardFields } from "../utils/vcardUtils";
 import { useColorModeValue } from "./ui/color-mode";
@@ -41,6 +41,19 @@ function mecard8ToIso(s: string): string {
 
 function isoToMecard8(iso: string): string {
    return iso.replace(/-/g, "");
+}
+
+/** Validation messages that refer to fields in the collapsible "extra" sections. */
+function vcardErrorsNeedAdvancedFields(errors: string[]): boolean {
+   return errors.some(
+      (e) =>
+         e.includes("URL must") ||
+         e.includes("Birthday must") ||
+         e.includes("Anniversary must") ||
+         e.includes("Gender must") ||
+         e.includes("Birthday time") ||
+         e.includes("Anniversary time"),
+   );
 }
 
 /** Soft panel: clear grouping without heavy chrome. */
@@ -102,6 +115,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
    density = "default",
    panelLayout = "linear",
 }) => {
+   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
+
    const muted = useColorModeValue("gray.600", "gray.400");
    const warnBg = useColorModeValue("orange.50", "orange.950");
    const warnBorder = useColorModeValue("orange.200", "orange.800");
@@ -146,6 +161,12 @@ const ContactForm: React.FC<ContactFormProps> = ({
    });
 
    const validation = validateVCardFields(contactInfo, vcardVersion);
+
+   useEffect(() => {
+      if (!showAdvancedFields && !validation.isValid && vcardErrorsNeedAdvancedFields(validation.errors)) {
+         setShowAdvancedFields(true);
+      }
+   }, [showAdvancedFields, validation.isValid, validation.errors]);
 
    const compact = density === "compact";
    const bento = panelLayout === "bento";
@@ -606,34 +627,68 @@ const ContactForm: React.FC<ContactFormProps> = ({
       </FormPanel>
    );
 
-   const linearStack = (
-      <VStack gap={sectionGap} align="stretch" w="full">
-         {elFormat}
-         {elName}
+   const advancedSections = (
+      <>
          {elWork}
-         {elContact}
          {elAddress}
          {elPersonal}
          {elMecard}
          {elWeb}
+      </>
+   );
+
+   const advancedToggle = (
+      <Button
+         variant="ghost"
+         size="sm"
+         w="full"
+         justifyContent="center"
+         fontWeight="normal"
+         color="fg.muted"
+         onClick={() => setShowAdvancedFields((v) => !v)}
+      >
+         {showAdvancedFields
+            ? "Hide work, address, website, and other fields"
+            : "Add work, address, website, and more"}
+      </Button>
+   );
+
+   const linearStack = (
+      <VStack gap={sectionGap} align="stretch" w="full">
+         {elFormat}
+         {elName}
+         {elContact}
+         {advancedToggle}
+         {showAdvancedFields && advancedSections}
       </VStack>
    );
 
    const bentoGrid = (
-      <SimpleGrid w="full" columns={{ base: 1, xl: 2 }} gap={4} alignItems="start">
-         <VStack gap={sectionGap} align="stretch" w="full" minW={0}>
-            {elFormat}
-            {elName}
-            {elWork}
-         </VStack>
-         <VStack gap={sectionGap} align="stretch" w="full" minW={0}>
-            {elContact}
-            {elAddress}
-            {elPersonal}
-            {elMecard}
-            {elWeb}
-         </VStack>
-      </SimpleGrid>
+      <VStack gap={sectionGap} align="stretch" w="full">
+         <SimpleGrid w="full" columns={{ base: 1, xl: 2 }} gap={4} alignItems="start">
+            <VStack gap={sectionGap} align="stretch" w="full" minW={0}>
+               {elFormat}
+               {elName}
+            </VStack>
+            <VStack gap={sectionGap} align="stretch" w="full" minW={0}>
+               {elContact}
+            </VStack>
+         </SimpleGrid>
+         {advancedToggle}
+         {showAdvancedFields && (
+            <SimpleGrid w="full" columns={{ base: 1, xl: 2 }} gap={4} alignItems="start">
+               <VStack gap={sectionGap} align="stretch" w="full" minW={0}>
+                  {elWork}
+               </VStack>
+               <VStack gap={sectionGap} align="stretch" w="full" minW={0}>
+                  {elAddress}
+                  {elPersonal}
+                  {elMecard}
+                  {elWeb}
+               </VStack>
+            </SimpleGrid>
+         )}
+      </VStack>
    );
 
    return (

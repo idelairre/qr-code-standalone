@@ -13,6 +13,7 @@ import {
    Progress,
    Select,
    SimpleGrid,
+   Slider,
    Text,
    VStack,
 } from "@chakra-ui/react";
@@ -51,6 +52,9 @@ interface QRCodeSettingsProps {
    onCopyQRData: () => void;
    qrType: "vcard" | "text" | "url" | "email" | "sms";
    vcardVersion: "2.1" | "3.0" | "4.0" | "mecard";
+   logoImageMargin: number;
+   setLogoImageMargin: (px: number) => void;
+   logoImageMarginSliderMax: number;
    /** Tighter spacing and wider control grids. */
    compact?: boolean;
    /** Single-row module controls on large screens (studio layout). */
@@ -82,6 +86,9 @@ const QRCodeSettings: React.FC<QRCodeSettingsProps> = ({
    onCopyQRData,
    qrType,
    vcardVersion,
+   logoImageMargin,
+   setLogoImageMargin,
+   logoImageMarginSliderMax,
    compact = false,
    studio = false,
 }) => {
@@ -274,11 +281,11 @@ const QRCodeSettings: React.FC<QRCodeSettingsProps> = ({
             </Fieldset.Content>
          </Fieldset.Root>
 
-         <Box mt={compact ? 2 : 4}>
+         <Box mt={compact ? 2 : 4} w="full" minW={0}>
             <Text mb={2} fontSize="sm" fontWeight="semibold" color={textColor}>
                Logo
             </Text>
-            <VStack gap={compact ? 2 : 3} align="stretch">
+            <VStack gap={compact ? 2 : 3} align="stretch" w="full" minW={0}>
                <FileUpload.Root
                   accept=".svg,.png,.jpg,.jpeg"
                   maxFiles={1}
@@ -362,6 +369,66 @@ const QRCodeSettings: React.FC<QRCodeSettingsProps> = ({
                </Button>
 
                {showLogo && (
+                  <Field.Root w="full">
+                     <HStack justify="space-between" align="center" mb={1}>
+                        <Field.Label fontSize="sm" fontWeight="medium" mb={0}>
+                           Logo padding
+                        </Field.Label>
+                        <Text fontSize="sm" color={subtextColor} fontVariantNumeric="tabular-nums">
+                           {logoImageMargin}px
+                        </Text>
+                     </HStack>
+                     <Box w="full" minW={0} py={1}>
+                        <Slider.Root
+                           w="full"
+                           minW={0}
+                           orientation="horizontal"
+                           colorPalette="blue"
+                           variant="outline"
+                           value={[
+                              Math.min(
+                                 logoImageMargin,
+                                 Number.isFinite(logoImageMarginSliderMax)
+                                    ? logoImageMarginSliderMax
+                                    : 32,
+                              ),
+                           ]}
+                           onValueChange={(d) =>
+                              setLogoImageMargin(
+                                 Math.min(
+                                    d.value[0],
+                                    Number.isFinite(logoImageMarginSliderMax)
+                                       ? logoImageMarginSliderMax
+                                       : 32,
+                                 ),
+                              )
+                           }
+                           min={0}
+                           max={Math.max(
+                              Number.isFinite(logoImageMarginSliderMax)
+                                 ? logoImageMarginSliderMax
+                                 : 32,
+                              0,
+                           )}
+                           step={1}
+                           size="sm"
+                        >
+                           <Slider.Control w="full" minW={0} flex="1">
+                              <Slider.Track flex="1">
+                                 <Slider.Range />
+                              </Slider.Track>
+                              <Slider.Thumbs />
+                           </Slider.Control>
+                        </Slider.Root>
+                     </Box>
+                     <Field.HelperText fontSize="xs">
+                        Extra space around the logo inside the cleared center; the image shrinks so no
+                        additional modules are hidden.
+                     </Field.HelperText>
+                  </Field.Root>
+               )}
+
+               {showLogo && (
                   <Button
                      size="sm"
                      variant="outline"
@@ -399,15 +466,13 @@ const QRCodeSettings: React.FC<QRCodeSettingsProps> = ({
             </Button>
          </SimpleGrid>
 
-         {/* Icon Picker Modal */}
-         {isIconPickerOpen && (
-            <IconPicker
-               isOpen={isIconPickerOpen}
-               onClose={() => setIsIconPickerOpen(false)}
-               onSelectIcon={onIconSelect}
-               selectedIcon={selectedIconName}
-            />
-         )}
+         {/* Keep mounted so Dialog can run close cleanup (scroll lock, focus trap, pointer guard). */}
+         <IconPicker
+            isOpen={isIconPickerOpen}
+            onClose={() => setIsIconPickerOpen(false)}
+            onSelectIcon={onIconSelect}
+            selectedIcon={selectedIconName}
+         />
       </Box>
    );
 };
