@@ -27,6 +27,9 @@ import QRCodeSettings from "./QRCodeSettings";
 import SimpleQRInputs from "./SimpleQRInputs";
 import { useColorModeValue } from "./ui/color-mode";
 
+/** Default URL encoded when the app opens on the URL QR type. */
+const DEFAULT_URL_QR_PAYLOAD = "https://must-love-grass.printify.me";
+
 const QRCodePage: React.FC = () => {
    const [contactInfo, setContactInfo] = useState<ContactInfo>(createEmptyContactInfo);
 
@@ -47,7 +50,7 @@ const QRCodePage: React.FC = () => {
    const [conversionProgress, setConversionProgress] = useState(0);
    const [conversionError, setConversionError] = useState<string>("");
    const [simpleText, setSimpleText] = useState("");
-   const [simpleUrl, setSimpleUrl] = useState("");
+   const [simpleUrl, setSimpleUrl] = useState(DEFAULT_URL_QR_PAYLOAD);
    const [simpleEmail, setSimpleEmail] = useState("");
    const [simpleSms, setSimpleSms] = useState("");
 

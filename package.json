@@ -23,7 +23,7 @@
       "format": "oxfmt .",
       "format:check": "oxfmt --check .",
       "predeploy": "bun run build && node scripts/copy-404.js",
-      "deploy": "gh-pages -d dist",
+      "deploy": "node scripts/gh-pages-publish.js",
       "setup-github-pages": "node scripts/setup-github-pages.js",
       "deploy-full": "node scripts/deploy.js",
       "run-all": "node scripts/run-all.js",
